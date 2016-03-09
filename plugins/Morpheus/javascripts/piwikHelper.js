@@ -131,6 +131,12 @@ var piwikHelper = {
         return ($element.length && $element.hasClass('ng-isolate-scope'));
     },
 
+    isAngularRenderingThePage: function ()
+    {
+        return $('[piwik-reporting-menu]').length;
+    },
+
+
     /**
      * Displays a Modal dialog. Text will be taken from the DOM node domSelector.
      * Given callback handles will be mapped to the buttons having a role attriute

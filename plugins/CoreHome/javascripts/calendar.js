@@ -115,6 +115,22 @@
         return [true, ''];
     }
 
+    function propagateNewUrlParams(date, period)
+    {
+        if (piwikHelper.isAngularRenderingThePage()) {
+            angular.element(document).injector().invoke(function ($location) {
+                var $search = $location.search();
+                $search.date = date;
+                $search.period = period;
+                $location.search($search);
+            });
+        } else {
+            // Let broadcast do its job:
+            // It will replace date value to both search query and hash and load the new page.
+            broadcast.propagateNewPage('date=' + date + '&period=' + period);
+        }
+    }
+
     piwik.getBaseDatePickerOptions = function (defaultDate) {
         return {
             showOtherMonths: false,
@@ -277,9 +293,7 @@
 
             datepickerElem.datepicker('refresh');
 
-            // Let broadcast do its job:
-            // It will replace date value to both search query and hash and load the new page.
-            broadcast.propagateNewPage('date=' + dateText + '&period=' + selectedPeriod);
+            propagateNewUrlParams(dateText, selectedPeriod);
         };
 
         var toggleMonthDropdown = function (disable) {
@@ -426,7 +440,8 @@
                     return false;
                 }
                 piwikHelper.showAjaxLoading('ajaxLoadingCalendar');
-                broadcast.propagateNewPage('period=range&date=' + dateFrom + ',' + dateTo);
+
+                propagateNewUrlParams(dateFrom + ',' + dateTo, 'range');
             })
             .show();
 

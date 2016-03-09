@@ -15,8 +15,10 @@
 
         var currentCategory = null;
         var currentSubcategory = null;
+        var currentPeriod = null;
+        var currentDate = null;
 
-        $scope.renderPage = function (category, subcategory) {
+        $scope.renderPage = function (category, subcategory, period, date) {
             if (!category || !subcategory) {
                 pageModel.resetPage();
                 $scope.loading = false;
@@ -25,6 +27,8 @@
 
             currentCategory = category;
             currentSubcategory = subcategory;
+            currentPeriod = period;
+            currentDate = date;
 
             if (category === 'Dashboard_Dashboard' && $.isNumeric(subcategory) && $('[piwik-dashboard]').length) {
                 // hack to make loading of dashboards faster since all the information is already there in the
@@ -49,16 +53,22 @@
         $scope.renderPage($location.search().category, $location.search().subcategory);
 
         $rootScope.$on('$locationChangeSuccess', function () {
+            var $search = $location.search();
             // should be handled by $route
-            var category = $location.search().category;
-            var subcategory = $location.search().subcategory;
+            var category = $search.category;
+            var subcategory = $search.subcategory;
+            var period = $search.subcategory;
+            var date = $search.subcategory;
 
-            if (category === currentCategory && subcategory === currentSubcategory) {
+            if (category === currentCategory
+                && subcategory === currentSubcategory
+                && period === currentPeriod
+                && date === currentDate) {
                 // this page is already loaded
                 return;
             }
 
-            $scope.renderPage(category, subcategory);
+            $scope.renderPage(category, subcategory, period, date);
         });
 
         $rootScope.$on('loadPage', function (event, category, subcategory) {

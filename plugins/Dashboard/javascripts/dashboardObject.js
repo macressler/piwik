@@ -87,7 +87,7 @@
             dashboardLayout = null;
             dashboardId = dashboardIdToLoad;
 
-            if (isAngularRenderingThePage()) {
+            if (piwikHelper.isAngularRenderingThePage()) {
                 angular.element(document).injector().invoke(function ($location) {
                     $location.search('subcategory', '' + dashboardIdToLoad);
                 });
@@ -517,17 +517,12 @@
                     });
     }
 
-    function isAngularRenderingThePage()
-    {
-        return $('[piwik-reporting-menu]').length;
-    }
-
     /**
      * Handle clicks for menu items for choosing between available dashboards
      */
     function rebuildMenu() {
 
-        if (isAngularRenderingThePage()) {
+        if (piwikHelper.isAngularRenderingThePage()) {
             // dashboard in reporting page (regular Piwik UI)
             angular.element(document).injector().invoke(function (reportingMenuModel) {
                 reportingMenuModel.reloadMenuItems();
