@@ -18,10 +18,10 @@ use Piwik\Widget\WidgetConfig;
 use Piwik\Widget\WidgetContainerConfig;
 
 /**
- * @group Widgets
- * @group WidgetsTest
+ * @group WidgetsProvider
+ * @group WidgetsProviderTest
  */
-class WidgetsTest extends IntegrationTestCase
+class WidgetsProviderTest extends IntegrationTestCase
 {
     /**
      * @var WidgetsProvider

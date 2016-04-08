@@ -25,7 +25,7 @@ use Exception;
  * For an example, see the {@link Piwik\Plugins\ExampleSettingsPlugin\MeasurableSettings} plugin.
  *
  * $settingsProvider   = new Piwik\Plugin\SettingsProvider(); // get this instance via dependency injection
- * $measurableSettings = $settingProvider->getMeasurableSettingForPlugin($yourPluginName, $idsite);
+ * $measurableSettings = $settingProvider->getMeasurableSettings($yourPluginName, $idsite, $idType = null);
  * $measurableSettings->yourSetting->getValue();
  *
  * @api

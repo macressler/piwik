@@ -9,9 +9,7 @@
 namespace Piwik\Plugins\CorePluginsAdmin;
 use Piwik\Piwik;
 use Piwik\Plugin\SettingsProvider;
-use Piwik\Settings\Plugin\SystemSetting;
 use Exception;
-use Piwik\Settings\Plugin\UserSetting;
 
 /**
  * API for plugin CorePluginsAdmin
@@ -36,6 +34,11 @@ class API extends \Piwik\Plugin\API
         $this->settingsMetadata = $settingsMetadata;
     }
 
+    /**
+     * @ignore
+     * @param array $settingValues Format: array('PluginName' => array(array('name' => 'SettingName1', 'value' => 'SettingValue1), ..))
+     * @throws Exception
+     */
     public function setSystemSettings($settingValues)
     {
         Piwik::checkUserHasSuperUserAccess();
@@ -53,6 +56,11 @@ class API extends \Piwik\Plugin\API
         }
     }
 
+    /**
+     * @ignore
+     * @param array $settingValues  Format: array('PluginName' => array(array('name' => 'SettingName1', 'value' => 'SettingValue1), ..))
+     * @throws Exception
+     */
     public function setUserSettings($settingValues)
     {
         Piwik::checkUserIsNotAnonymous();
@@ -70,6 +78,11 @@ class API extends \Piwik\Plugin\API
         }
     }
 
+    /**
+     * @ignore
+     * @return array
+     * @throws \Piwik\NoAccessException
+     */
     public function getSystemSettings()
     {
         Piwik::checkUserHasSuperUserAccess();
@@ -79,6 +92,11 @@ class API extends \Piwik\Plugin\API
         return $this->settingsMetadata->formatSettings($systemSettings);
     }
 
+    /**
+     * @ignore
+     * @return array
+     * @throws \Piwik\NoAccessException
+     */
     public function getUserSettings()
     {
         Piwik::checkUserIsNotAnonymous();

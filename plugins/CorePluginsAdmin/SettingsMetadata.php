@@ -40,7 +40,7 @@ class SettingsMetadata
             $message = $e->getMessage();
 
             if (!empty($setting)) {
-                $title = Piwik::translate($setting->configureField()->title);
+                $title = Piwik::translate(strip_tags($setting->configureField()->title));
                 throw new Exception($title . ': ' . $message);
             }
         }

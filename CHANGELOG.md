@@ -33,8 +33,6 @@ This is a changelog for Piwik platform developers. All changes for our HTTP API'
 * New HTTP API method `API.getWidgetMetadata` to get a list of available widgets
 * New HTTP API method `API.getReportPagesMetadata` to get a list of all available pages that exist including the widgets they include
 * New HTTP API method `SitesManager.getSiteSettings` to get a list of all available settings for a specific site
-* New HTTP API method `CorePluginsAdmin.getSystemSettings` to get a list of all available system settings and `CorePluginsAdmin.setSystemSettings` to set system settings.
-* New HTTP API method `CorePluginsAdmin.getUserSettings` to get a list of all available user settings and `CorePluginsAdmin.setUserSettings` to set user settings for the current authenticated user.
 * The JavaScript AjaxHelper has a new method `ajaxHelper.withTokenInUrl()` to easily send a token along a XHR. Within the Controller the existence of this token can be checked via `$this->checkTokenInUrl();` to prevent CSRF attacks.
 
 ### New features

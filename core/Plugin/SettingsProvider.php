@@ -12,6 +12,9 @@ use Piwik\CacheId;
 use Piwik\Container\StaticContainer;
 use Piwik\Plugin;
 use Piwik\Cache as PiwikCache;
+use Piwik\Settings\Measurable\MeasurableSettings;
+use \Piwik\Settings\Plugin\UserSettings;
+use \Piwik\Settings\Plugin\SystemSettings;
 
 /**
  * Base class of all plugin settings providers. Plugins that define their own configuration settings
@@ -21,8 +24,6 @@ use Piwik\Cache as PiwikCache;
  * {@link addSetting()} method for each of the plugin's settings.
  *
  * For an example, see the {@link Piwik\Plugins\ExampleSettingsPlugin\ExampleSettingsPlugin} plugin.
- *
- * @api
  */
 class SettingsProvider
 {
@@ -37,9 +38,12 @@ class SettingsProvider
     }
 
     /**
-     * @return \Piwik\Settings\Plugin\SystemSettings|null
+     *
+     * Get user settings implemented by a specific plugin (if implemented by this plugin).
+     * @param string $pluginName
+     * @return SystemSettings|null
      */
-    public function getSystemSetting($pluginName)
+    public function getSystemSettings($pluginName)
     {
         $plugin = $this->getLoadedAndActivated($pluginName);
 
@@ -53,9 +57,11 @@ class SettingsProvider
     }
 
     /**
-     * @return \Piwik\Settings\Plugin\UserSettings|null
+     * Get user settings implemented by a specific plugin (if implemented by this plugin).
+     * @param string $pluginName
+     * @return UserSettings|null
      */
-    public function getUserSetting($pluginName)
+    public function getUserSettings($pluginName)
     {
         $plugin = $this->getLoadedAndActivated($pluginName);
 
@@ -69,11 +75,11 @@ class SettingsProvider
     }
 
     /**
-     * Returns all available plugin settings, even settings for inactive plugins. A plugin has to specify a file named
-     * `Settings.php` containing a class named `Settings` that extends `Piwik\Settings\Settings` in order to be
-     * considered as a plugin setting. Otherwise the settings for a plugin won't be available.
+     * Returns all available system settings. A plugin has to specify a file named `SystemSettings.php` containing a
+     * class named `SystemSettings` that extends `Piwik\Settings\Plugin\SystemSettings` in order to be considered as
+     * a system setting. Otherwise the settings for a plugin won't be available.
      *
-     * @return \Piwik\Settings\Plugin\SystemSettings[]   An array containing array([pluginName] => [setting instance]).
+     * @return SystemSettings[]   An array containing array([pluginName] => [setting instance]).
      */
     public function getAllSystemSettings()
     {
@@ -85,7 +91,7 @@ class SettingsProvider
             $byPluginName = array();
 
             foreach ($pluginNames as $plugin) {
-                $component = $this->getSystemSetting($plugin);
+                $component = $this->getSystemSettings($plugin);
 
                 if (!empty($component)) {
                     $byPluginName[$plugin] = $component;
@@ -99,11 +105,11 @@ class SettingsProvider
     }
 
     /**
-     * Returns all available plugin settings, even settings for inactive plugins. A plugin has to specify a file named
-     * `Settings.php` containing a class named `Settings` that extends `Piwik\Settings\Settings` in order to be
-     * considered as a plugin setting. Otherwise the settings for a plugin won't be available.
+     * Returns all available user settings. A plugin has to specify a file named `UserSettings.php` containing a class
+     * named `UserSettings` that extends `Piwik\Settings\Plugin\UserSettings` in order to be considered as a plugin
+     * setting. Otherwise the settings for a plugin won't be available.
      *
-     * @return \Piwik\Settings\Plugin\UserSettings[]   An array containing array([pluginName] => [setting instance]).
+     * @return UserSettings[]   An array containing array([pluginName] => [setting instance]).
      */
     public function getAllUserSettings()
     {
@@ -115,7 +121,7 @@ class SettingsProvider
             $byPluginName = array();
 
             foreach ($pluginNames as $plugin) {
-                $component = $this->getUserSetting($plugin);
+                $component = $this->getUserSettings($plugin);
 
                 if (!empty($component)) {
                     $byPluginName[$plugin] = $component;
@@ -129,9 +135,20 @@ class SettingsProvider
     }
 
     /**
-     * @return \Piwik\Settings\Measurable\MeasurableSettings|null
+     * @api
+     *
+     * Get measurable settings for a specific plugin.
+     *
+     * @param string $pluginName    The name of a plugin.
+     * @param int $idSite           The ID of a site. If a site is about to be created pass idSite = 0.
+     * @param string|null $idType   If null, idType will be detected automatically if the site already exists. Only
+     *                              needed to set a value when idSite = 0 (this is the case when a site is about)
+     *                              to be created.
+     *
+     * @return MeasurableSettings|null  Returns null if no MeasurableSettings implemented by this plugin or when plugin
+     *                                  is not loaded and activated. Returns an instance of the settings otherwise.
      */
-    public function getMeasurableSettings($pluginName, $idSite, $idType)
+    public function getMeasurableSettings($pluginName, $idSite, $idType = null)
     {
         $plugin = $this->getLoadedAndActivated($pluginName);
 
@@ -148,13 +165,18 @@ class SettingsProvider
     }
 
     /**
-     * Returns all available plugin settings, even settings for inactive plugins. A plugin has to specify a file named
-     * `Settings.php` containing a class named `Settings` that extends `Piwik\Settings\Settings` in order to be
-     * considered as a plugin setting. Otherwise the settings for a plugin won't be available.
+     * @api
      *
-     * @return \Piwik\Settings\Measurable\MeasurableSettings[]   An array containing array([] => [setting instance]).
+     * Get all available measurable settings implemented by loaded and activated plugins.
+     *
+     * @param int $idSite           The ID of a site. If a site is about to be created pass idSite = 0.
+     * @param string|null $idMeasurableType   If null, idType will be detected automatically if the site already exists.
+     *                                        Only needed to set a value when idSite = 0 (this is the case when a site
+     *                                        is about) to be created.
+     *
+     * @return MeasurableSettings[]
      */
-    public function getAllMeasurableSettings($idSite, $idMeasurableType)
+    public function getAllMeasurableSettings($idSite, $idMeasurableType = null)
     {
         $pluginNames = $this->pluginManager->getActivatedPlugins();
         $byPluginName = array();
