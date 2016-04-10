@@ -21,12 +21,14 @@ class GetBrand extends Base
         $this->name          = Piwik::translate('DevicesDetection_DeviceBrand');
         $this->documentation = ''; // TODO
         $this->order = 1;
+        $this->hasGoalMetrics = true;
         $this->widgetTitle  = 'DevicesDetection_DeviceBrand';
     }
 
     public function configureView(ViewDataTable $view)
     {
         $view->config->show_search = true;
+        $view->config->show_goals = true;
         $view->config->show_exclude_low_population = false;
         $view->config->addTranslation('label', Piwik::translate("DevicesDetection_dataTableLabelBrands"));
     }

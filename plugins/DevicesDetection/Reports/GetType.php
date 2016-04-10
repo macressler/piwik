@@ -22,6 +22,7 @@ class GetType extends Base
         $this->name          = Piwik::translate('DevicesDetection_DeviceType');
         $this->documentation = ''; // TODO
         $this->order = 0;
+        $this->hasGoalMetrics = true;
         $this->widgetTitle  = 'DevicesDetection_DeviceType';
     }
 
@@ -31,6 +32,7 @@ class GetType extends Base
         $view->requestConfig->filter_limit = $unknownTypeCount + count(DeviceParser::getAvailableDeviceTypeNames());
         $view->config->show_search = false;
         $view->config->show_exclude_low_population = false;
+        $view->config->show_goals = true;
         $view->config->addTranslation('label', Piwik::translate("DevicesDetection_dataTableLabelTypes"));
     }
 
