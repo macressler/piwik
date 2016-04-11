@@ -43,7 +43,9 @@ class Activate extends Migration
 
     public function exec()
     {
-        $this->pluginManager->activatePlugin($this->pluginName);
+        if (!$this->pluginManager->isPluginActivated($this->pluginName)) {
+            $this->pluginManager->activatePlugin($this->pluginName);
+        }
     }
 
 }

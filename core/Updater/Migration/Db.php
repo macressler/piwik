@@ -16,10 +16,6 @@ use Piwik\Updater\Migration;
  */
 abstract class Db extends Migration
 {
-    /**
-     * Table '%s.%s' doesn't exist
-     */
-    const ERROR_CODE_TABLE_NOT_EXISTS = 1146;
 
     /**
      * Table '%s' already exists
@@ -29,7 +25,12 @@ abstract class Db extends Migration
     /**
      *  Unknown table '%s'
      */
-    const ERROR_CODE_TABLE_UNKNOWN = 1051;
+    const ERROR_CODE_UNKNOWN_TABLE = 1051;
+
+    /**
+     *  Unknown column '%s' in '%s'
+     */
+    const ERROR_CODE_UNKNOWN_COLUMN = 1054;
 
     /**
      * Duplicate column name '%s'
@@ -55,5 +56,10 @@ abstract class Db extends Migration
      * Can't DROP '%s'; check that column/key exists
      */
     const ERROR_CODE_COLUMN_NOT_EXISTS = 1091;
+
+    /**
+     * Table '%s.%s' doesn't exist
+     */
+    const ERROR_CODE_TABLE_NOT_EXISTS = 1146;
 
 }

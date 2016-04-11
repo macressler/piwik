@@ -16,6 +16,7 @@ use Piwik\Db;
 use Piwik\Updater;
 use Piwik\Updates;
 use Piwik\Plugins\Dashboard\Model as DashboardModel;
+use Piwik\Updater\Migration\Factory as MigrationFactory;
 
 /**
  * This Update script will update all browser and os archives of UserSettings and DevicesDetection plugin
@@ -43,7 +44,17 @@ class Updates_2_10_0_b5 extends Updates
 {
     public static $archiveBlobTables;
 
-    public function getMigrationQueries(Updater $updater)
+    /**
+     * @var MigrationFactory
+     */
+    private $migration;
+
+    public function __construct(MigrationFactory $factory)
+    {
+        $this->migration = $factory;
+    }
+
+    public function getMigrations(Updater $updater)
     {
         $sqls = array('# ATTENTION: This update script will execute some more SQL queries than that below as it is necessary to rebuilt some archives #' => false);
 
@@ -58,8 +69,9 @@ class Updates_2_10_0_b5 extends Updates
             'UserSettings_getWideScreen' => 'UserSettings_getScreenType',
         );
 
+        $reportTable = Common::prefixTable('report');
         foreach ($reportsToReplace as $old => $new) {
-            $sqls["UPDATE " . Common::prefixTable('report') . " SET reports = REPLACE(reports, '".$old."', '".$new."')"] = false;
+            $sqls[] = $this->migration->db->sql("UPDATE $reportTable SET reports = REPLACE(reports, '".$old."', '".$new."')");
         }
 
         // update dashboard to use new widgets
@@ -85,6 +97,9 @@ class Updates_2_10_0_b5 extends Updates
 
         $allDashboards = Db::get()->fetchAll(sprintf("SELECT * FROM %s", Common::prefixTable('user_dashboard')));
 
+        $dashboardTable = Common::prefixTable('user_dashboard');
+        $dashboardQuery = "UPDATE $dashboardTable SET layout = ? WHERE iddashboard = ?";
+
         foreach ($allDashboards as $dashboard) {
             $dashboardLayout = json_decode($dashboard['layout']);
 
@@ -92,7 +107,7 @@ class Updates_2_10_0_b5 extends Updates
 
             $newLayout = json_encode($dashboardLayout);
             if ($newLayout != $dashboard['layout']) {
-                $sqls["UPDATE " . Common::prefixTable('user_dashboard') . " SET layout = '".addslashes($newLayout)."' WHERE iddashboard = ".$dashboard['iddashboard']] = false;
+                $sqls[] = $this->migration->db->boundSql($dashboardQuery, array($newLayout, $dashboard['iddashboard']));
             }
         }
 
@@ -101,7 +116,7 @@ class Updates_2_10_0_b5 extends Updates
 
     public function doUpdate(Updater $updater)
     {
-        $updater->executeMigrationQueries(__FILE__, $this->getMigrationQueries($updater));
+        $updater->executeMigrations(__FILE__, $this->getMigrations($updater));
 
         // DeviceDetection upgrade in beta1 timed out on demo #6750
         $archiveBlobTables = self::getAllArchiveBlobTables();
