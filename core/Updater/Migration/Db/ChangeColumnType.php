@@ -8,14 +8,13 @@
 namespace Piwik\Updater\Migration\Db;
 
 /**
- * @see Factory::changeColumn()
+ * @see Factory::changeColumnType()
  */
-class ChangeColumnType extends Sql
+class ChangeColumnType extends ChangeColumn
 {
     public function __construct($table, $columnName, $columnType)
     {
-        $sql = sprintf("ALTER TABLE `%s` CHANGE `%s` `%s` %s", $table, $columnName, $columnName, $columnType);
-        parent::__construct($sql, static::ERROR_CODE_DUPLICATE_COLUMN);
+        parent::__construct($table, $columnName, $columnName, $columnType);
     }
 
 }

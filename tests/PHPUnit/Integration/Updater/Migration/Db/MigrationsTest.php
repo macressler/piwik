@@ -88,14 +88,40 @@ class MigrationsTest extends IntegrationTestCase
 
         $index = Db::fetchAll("SHOW INDEX FROM {$this->testTablePrefixed}");
 
+        $this->assertCount(2, $index);
         $this->assertSame('column1', $index[0]['Column_name']);
-        $this->assertSame('column1', $index[0]['Key_name']);
+        $this->assertSame('index_column1_column3', $index[0]['Key_name']);
         $this->assertSame('column3', $index[1]['Column_name']);
-        $this->assertSame('column1', $index[1]['Key_name']);
+        $this->assertSame('index_column1_column3', $index[1]['Key_name']);
     }
 
     /**
      * @depends test_addIndex
+     */
+    public function test_dropIndex()
+    {
+        $this->factory->dropIndex($this->testTable, 'index_column1_column3')->exec();
+
+        $index = Db::fetchAll("SHOW INDEX FROM {$this->testTablePrefixed}");
+
+        $this->assertSame(array(), $index);
+    }
+
+    /**
+     * @depends test_dropIndex
+     */
+    public function test_addPrimaryIndex()
+    {
+        $this->factory->addPrimaryKey($this->testTable, array('column3'))->exec();
+
+        $index = Db::fetchAll("SHOW INDEX FROM {$this->testTablePrefixed} WHERE Key_name = 'PRIMARY'");
+
+        $this->assertCount(1, $index);
+        $this->assertSame('column3', $index[0]['Column_name']);
+    }
+
+    /**
+     * @depends test_addPrimaryIndex
      */
     public function test_changeColumnType()
     {
@@ -114,7 +140,7 @@ class MigrationsTest extends IntegrationTestCase
         );
         $this->factory->insert($this->testTable, $values)->exec();
 
-        $row = Db::fetchRow("SELECT * FROM {$this->testTablePrefixed}");
+        $row = $this->fetchRow();
 
         $values['column2'] = 32767; // because we changed type to smallint before
         $this->assertEquals($values, $row);
@@ -133,11 +159,60 @@ class MigrationsTest extends IntegrationTestCase
     /**
      * @depends test_sql
      */
+    public function test_addColumns()
+    {
+        $this->factory->addColumns($this->testTable, array(
+            'column10' => 'VARCHAR(255) DEFAULT ""',
+            'column11' => 'VARCHAR(55) DEFAULT ""',
+        ))->exec();
+
+        $this->assertSame(array('column1', 'column5', 'column3', 'column10', 'column11'), $this->getInstalledColumnNames());
+    }
+
+    /**
+     * @depends test_addColumns
+     */
+    public function test_changeColumnTypes()
+    {
+        $this->factory->changeColumnTypes($this->testTable, array(
+            'column5' => 'VARCHAR(10) DEFAULT ""',
+            'column11' => 'VARCHAR(255) DEFAULT "test"',
+        ))->exec();
+    }
+
+    /**
+     * @depends test_changeColumnTypes
+     */
+    public function test_dropColumn()
+    {
+        $this->factory->dropColumn($this->testTable, 'column10')->exec();
+
+        $this->assertSame(array('column1', 'column5', 'column3', 'column11'), $this->getInstalledColumnNames());
+    }
+
+    /**
+     * @depends test_dropColumn
+     */
+    public function test_changeColumn()
+    {
+        $this->factory->changeColumn($this->testTable, 'column11', 'column12', 'VARCHAR(255)')->exec();
+
+        $this->assertSame(array('column1', 'column5', 'column3', 'column12'), $this->getInstalledColumnNames());
+    }
+
+    /**
+     * @depends test_changeColumn
+     */
     public function test_dropTable()
     {
         $this->factory->dropTable($this->testTable)->exec();
 
         $this->assertTableIsNotInstalled();
+    }
+
+    private function fetchRow()
+    {
+        return Db::fetchRow("SELECT * FROM {$this->testTablePrefixed}");
     }
 
     private function assertTableIsInstalled()

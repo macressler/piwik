@@ -15,12 +15,23 @@ use Piwik\Plugins\UsersManager\API as UsersManagerApi;
 use Piwik\UpdaterErrorException;
 use Piwik\Updates;
 use Piwik\Updater;
+use Piwik\Updater\Migration\Factory as MigrationFactory;
 
 /**
  */
 class Updates_2_0_4_b7 extends Updates
 {
-    public function getMigrationQueries(Updater $updater)
+    /**
+     * @var MigrationFactory
+     */
+    private $migration;
+
+    public function __construct(MigrationFactory $factory)
+    {
+        $this->migration = $factory;
+    }
+
+    public function getMigrations(Updater $updater)
     {
         return array();
     }

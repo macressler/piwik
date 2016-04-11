@@ -17,7 +17,7 @@ class CreateTable extends Sql
     /**
      * Constructor.
      * @param Db\Settings $dbSettings
-     * @param string $table Unprefixed table name
+     * @param string $table Prefixed table name
      * @param array $columnNames array(columnName => columnValue)
      */
     public function __construct(Db\Settings $dbSettings, $table, $columnNames)

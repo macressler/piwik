@@ -12,11 +12,21 @@ namespace Piwik\Updates;
 use Piwik\DataAccess\ArchiveTableCreator;
 use Piwik\Updater;
 use Piwik\Updates;
+use Piwik\Updater\Migration\Factory as MigrationFactory;
 
 class Updates_2_11_0_b4 extends Updates
 {
+    /**
+     * @var MigrationFactory
+     */
+    private $migration;
 
-    public function getMigrationQueries(Updater $updater)
+    public function __construct(MigrationFactory $factory)
+    {
+        $this->migration = $factory;
+    }
+
+    public function getMigrations(Updater $updater)
     {
         $sqls = array();
 
@@ -27,7 +37,7 @@ class Updates_2_11_0_b4 extends Updates
         });
 
         foreach ($archiveBlobTables as $table) {
-            $sqls["UPDATE " . $table . " SET name = 'UserLanguage_language' WHERE name = 'UserSettings_language'"] = false;
+            $sqls[] = $this->migration->db->sql("UPDATE $table SET name = 'UserLanguage_language' WHERE name = 'UserSettings_language'");
         }
 
         return $sqls;
@@ -42,6 +52,6 @@ class Updates_2_11_0_b4 extends Updates
         } catch (\Exception $e) {
         }
 
-        $updater->executeMigrationQueries(__FILE__, $this->getMigrationQueries($updater));
+        $updater->executeMigrations(__FILE__, $this->getMigrations($updater));
     }
 }

@@ -128,6 +128,66 @@ class Factory
     }
 
     /**
+     * Adds multiple new database table columns to an existing table at once.
+     *
+     * Adding multiple columns at the same time can lead to performance improvements compared to adding each new column
+     * separately.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param array $columns An array of column name to column type pairs,
+     *                       eg array('my_column_name' => 'VARCHAR(200) NOT NULL', 'column2' => '...')
+     * @param string|null $placeColumnAfter  If specified, the first added column will be added after this specified column
+     *                                       name. All following columns will be added after the previous specified in
+     *                                       $columns. If you specify a column be sure it actually exists and can be added
+     *                                       after this column.
+     * @return AddColumns
+     */
+    public function addColumns($table, $columns, $placeColumnAfter = null)
+    {
+        $table = $this->prefixTable($table);
+
+        return $this->container->make('Piwik\Updater\Migration\Db\AddColumns', array(
+            'table' => $table, 'columns' => $columns, 'placeColumnAfter' => $placeColumnAfter
+        ));
+    }
+
+    /**
+     * Drops an existing database table column.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param string $columnName  The name of the column that shall be dropped, eg 'my_column_name'.
+     * @return DropColumn
+     */
+    public function dropColumn($table, $columnName)
+    {
+        $table = $this->prefixTable($table);
+
+        return $this->container->make('Piwik\Updater\Migration\Db\DropColumn', array(
+            'table' => $table, 'columnName' => $columnName
+        ));
+    }
+
+    /**
+     * Changes the column name and column type of an existing database table column.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param string $oldColumnName  The current name of the column that shall be renamed/changed, eg 'column_name'.
+     * @param string $newColumnName  The new name of the column, eg 'new_column_name'.
+     * @param string $columnType  The updated type the new column should have, eg 'VARCHAR(200) NOT NULL'.
+     *
+     * @return ChangeColumn
+     */
+    public function changeColumn($table, $oldColumnName, $newColumnName, $columnType)
+    {
+        $table = $this->prefixTable($table);
+
+        return $this->container->make('Piwik\Updater\Migration\Db\ChangeColumn', array(
+            'table' => $table, 'oldColumnName' => $oldColumnName,
+            'newColumnName' => $newColumnName, 'columnType' => $columnType
+        ));
+    }
+
+    /**
      * Changes the type of an existing database table column.
      *
      * @param string $table  Unprefixed database table name, eg 'log_visit'.
@@ -146,16 +206,44 @@ class Factory
     }
 
     /**
+     * Changes the type of multiple existing database table columns at the same time.
+     *
+     * Changing multiple columns at the same time can lead to performance improvements compared to changing the type
+     * of each column separately.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param array $columns An array of column name to column type pairs,
+     *                       eg array('my_column_name' => 'VARCHAR(200) NOT NULL', 'column2' => '...')
+     *
+     * @return ChangeColumnTypes
+     */
+    public function changeColumnTypes($table, $columns)
+    {
+        $table = $this->prefixTable($table);
+
+        return $this->container->make('Piwik\Updater\Migration\Db\ChangeColumnTypes', array(
+            'table' => $table, 'columns' => $columns
+        ));
+    }
+
+    /**
      * Adds an index to an existing database table.
      *
      * This is equivalent to an `ADD INDEX(column_name_1, column_name_2)` in SQL.
      * It adds a normal index, no unique index.
      *
+     * Note: If no indexName is specified, it will automatically generate a name for this index if which is basically:
+     * `'index_' . implode('_', $columnNames)`. If a column name is eg `column1(10)` then only the first part (`column1`)
+     * will be used. For example when using columns `array('column1', 'column2(10)')` then the index name will be
+     * `index_column1_column2`.
+     *
      * @param string $table  Unprefixed database table name, eg 'log_visit'.
-     * @param string[]|string $columnNames Either one or multiple column names, eg array('column_name_1', 'column_name_2')
+     * @param string[]|string $columnNames Either one or multiple column names, eg array('column_name_1', 'column_name_2').
+     *                                     A column name can be appended by a number bracket eg "column_name_1(10)".
+     * @param string $indexName If specified, the given index name will be used instead of the automatically generated one.
      * @return AddIndex
      */
-    public function addIndex($table, $columnNames)
+    public function addIndex($table, $columnNames, $indexName = '')
     {
         $table = $this->prefixTable($table);
         if (!is_array($columnNames)) {
@@ -163,6 +251,43 @@ class Factory
         }
 
         return $this->container->make('Piwik\Updater\Migration\Db\AddIndex', array(
+            'table' => $table, 'columnNames' => $columnNames, 'indexName' => $indexName
+        ));
+    }
+
+    /**
+     * Drops an existing index from a database table.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param string $indexName The name of the index that shall be dropped.
+     * @return DropIndex
+     */
+    public function dropIndex($table, $indexName)
+    {
+        $table = $this->prefixTable($table);
+
+        return $this->container->make('Piwik\Updater\Migration\Db\DropIndex', array(
+            'table' => $table, 'indexName' => $indexName
+        ));
+    }
+
+    /**
+     * Adds a primary key to an existing database table.
+     *
+     * This is equivalent to an `ADD PRIMARY KEY(column_name_1, column_name_2)` in SQL.
+     *
+     * @param string $table  Unprefixed database table name, eg 'log_visit'.
+     * @param string[]|string $columnNames Either one or multiple column names, eg array('column_name_1', 'column_name_2')
+     * @return AddPrimaryKey
+     */
+    public function addPrimaryKey($table, $columnNames)
+    {
+        $table = $this->prefixTable($table);
+        if (!is_array($columnNames)) {
+            $columnNames = array($columnNames);
+        }
+
+        return $this->container->make('Piwik\Updater\Migration\Db\AddPrimaryKey', array(
             'table' => $table, 'columnNames' => $columnNames
         ));
     }

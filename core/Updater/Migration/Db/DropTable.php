@@ -10,18 +10,18 @@ namespace Piwik\Updater\Migration\Db;
 use Piwik\Db;
 
 /**
- * @see Factory::createTable()
+ * @see Factory::dropTable()
  */
 class DropTable extends Sql
 {
     /**
-     * @param string $table Unprefixed table name
+     * @param string $table Prefixed table name
      */
     public function __construct($table)
     {
-        $sql = sprintf('DROP TABLE `%s`', $table);
+        $sql = sprintf('DROP TABLE IF EXISTS `%s`', $table);
 
-        parent::__construct($sql, array(static::ERROR_CODE_TABLE_NOT_EXISTS, static::ERROR_CODE_TABLE_UNKNOWN));
+        parent::__construct($sql, array(static::ERROR_CODE_TABLE_NOT_EXISTS, static::ERROR_CODE_UNKNOWN_TABLE));
     }
 
 }

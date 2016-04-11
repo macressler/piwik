@@ -12,18 +12,28 @@ namespace Piwik\Updates;
 use Piwik\Common;
 use Piwik\Updater;
 use Piwik\Updates;
+use Piwik\Updater\Migration\Factory as MigrationFactory;
 
 /**
  */
 class Updates_1_8_4_b1 extends Updates
 {
+    /**
+     * @var MigrationFactory
+     */
+    private $migration;
+
+    public function __construct(MigrationFactory $factory)
+    {
+        $this->migration = $factory;
+    }
 
     public static function isMajorUpdate()
     {
         return true;
     }
 
-    public function getMigrationQueries(Updater $updater)
+    public function getMigrations(Updater $updater)
     {
         $action = Common::prefixTable('log_action');
         $duplicates = Common::prefixTable('log_action_duplicates');
@@ -33,12 +43,10 @@ class Updates_1_8_4_b1 extends Updates
 
         return array(
 
-            // add url_prefix column
-            "   ALTER TABLE `$action`
-		    	ADD `url_prefix` TINYINT(2) NULL AFTER `type`;
-		    "                                                                                                     => 1060, // ignore error 1060 Duplicate column name 'url_prefix'
+            $this->migration->db->addColumn('log_action', 'url_prefix', 'TINYINT(2) NULL', 'type'),
 
             // remove protocol and www and store information in url_prefix
+            $this->migration->db->sql(
             "   UPDATE `$action`
 				SET
 				  url_prefix = IF (
@@ -63,20 +71,17 @@ class Updates_1_8_4_b1 extends Updates
 				WHERE
 				  type = 1 AND
 				  url_prefix IS NULL;
-			"                                                                      => false,
-
-            // find duplicates
-            "   DROP TABLE IF EXISTS `$duplicates`;
-			"                                                    => false,
-            "   CREATE TABLE `$duplicates` (
-				 `before` int(10) unsigned NOT NULL,
-				 `after` int(10) unsigned NOT NULL,
-				 KEY `mainkey` (`before`)
-				) ENGINE=InnoDB;
-			"                                                            => false,
+			"),
+            $this->migration->db->dropTable('log_action_duplicates'),
+            $this->migration->db->createTable('log_action_duplicates', array(
+                'before' => 'int(10) unsigned NOT NULL',
+                'after' => 'int(10) unsigned NOT NULL',
+            )),
+            $this->migration->db->sql("ALTER TABLE $duplicates ADD KEY `mainkey` (`before`)"),
 
             // grouping by name only would be case-insensitive, so we GROUP BY name,hash
             // ON (action.type = 1 AND canonical.hash = action.hash) will use index (type, hash)
+            $this->migration->db->sql(
             "   INSERT INTO `$duplicates` (
 				  SELECT
 					action.idaction AS `before`,
@@ -102,9 +107,10 @@ class Updates_1_8_4_b1 extends Updates
 					AND canonical.name = action.name
 					AND canonical.idaction != action.idaction
 				);
-			" => false,
+			"),
 
             // replace idaction in log_link_visit_action
+            $this->migration->db->sql(
             "   UPDATE
 				  `$visitAction` AS link
 				LEFT JOIN
@@ -114,7 +120,8 @@ class Updates_1_8_4_b1 extends Updates
 				  link.idaction_url = duplicates_idaction_url.after
 				WHERE
 				  duplicates_idaction_url.after IS NOT NULL;
-			"                           => false,
+			"),
+            $this->migration->db->sql(
             "   UPDATE
 				  `$visitAction` AS link
 				LEFT JOIN
@@ -124,9 +131,10 @@ class Updates_1_8_4_b1 extends Updates
 				  link.idaction_url_ref = duplicates_idaction_url_ref.after
 				WHERE
 				  duplicates_idaction_url_ref.after IS NOT NULL;
-			"                           => false,
+			"),
 
             // replace idaction in log_conversion
+            $this->migration->db->sql(
             "   UPDATE
 				  `$conversion` AS conversion
 				LEFT JOIN
@@ -136,9 +144,10 @@ class Updates_1_8_4_b1 extends Updates
 				  conversion.idaction_url = duplicates.after
 				WHERE
 				  duplicates.after IS NOT NULL;
-			"                            => false,
+			"),
 
             // replace idaction in log_visit
+            $this->migration->db->sql(
             "   UPDATE
 				  `$visit` AS visit
 				LEFT JOIN
@@ -148,7 +157,8 @@ class Updates_1_8_4_b1 extends Updates
 				  visit.visit_entry_idaction_url = duplicates_entry.after
 				WHERE
 				  duplicates_entry.after IS NOT NULL;
-			"                                 => false,
+			"),
+            $this->migration->db->sql(
             "   UPDATE
 				  `$visit` AS visit
 				LEFT JOIN
@@ -158,9 +168,10 @@ class Updates_1_8_4_b1 extends Updates
 				  visit.visit_exit_idaction_url = duplicates_exit.after
 				WHERE
 				  duplicates_exit.after IS NOT NULL;
-			"                                 => false,
+			"),
 
             // remove duplicates from log_action
+            $this->migration->db->sql(
             "   DELETE action FROM
 				  `$action` AS action
 				LEFT JOIN
@@ -168,11 +179,10 @@ class Updates_1_8_4_b1 extends Updates
 				  ON action.idaction = duplicates.before
 				WHERE
 				  duplicates.after IS NOT NULL;
-			"                                => false,
+			"),
 
             // remove the duplicates table
-            "   DROP TABLE `$duplicates`;
-			"                                                              => false
+            $this->migration->db->dropTable('log_action_duplicates')
         );
     }
 
@@ -180,7 +190,7 @@ class Updates_1_8_4_b1 extends Updates
     {
         try {
             self::enableMaintenanceMode();
-            $updater->executeMigrationQueries(__FILE__, $this->getMigrationQueries($updater));
+            $updater->executeMigrations(__FILE__, $this->getMigrations($updater));
             self::disableMaintenanceMode();
         } catch (\Exception $e) {
             self::disableMaintenanceMode();
